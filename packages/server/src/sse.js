@@ -13,8 +13,11 @@ export function createSSE() {
 
   function broadcast(event, data) {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-    for (const reply of clients) {
-      try { reply.raw.write(payload); } catch { clients.delete(reply); }
+    for (const reply of [...clients]) {
+      try {
+        if (!reply.raw.destroyed) reply.raw.write(payload);
+        else clients.delete(reply);
+      } catch { clients.delete(reply); }
     }
   }
 

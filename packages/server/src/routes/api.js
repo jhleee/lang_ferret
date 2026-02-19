@@ -11,10 +11,10 @@ export default function apiRoutes(fastify, { db, buffer, sse, dbPath }) {
     });
   });
 
-  fastify.get('/api/traces/:traceId', async (request) => {
+  fastify.get('/api/traces/:traceId', async (request, reply) => {
     const runs = db.getRunsByTrace(request.params.traceId);
     if (runs.length === 0) {
-      return { statusCode: 404, error: 'Trace not found' };
+      return reply.code(404).send({ error: 'Trace not found' });
     }
     return { trace_id: request.params.traceId, runs };
   });

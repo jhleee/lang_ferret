@@ -28,10 +28,22 @@ export default function TraceList() {
   );
 
   useEffect(() => {
-    const base = import.meta.env.DEV ? '' : '/ui/..';
-    const evtSource = new EventSource(`${base}/api/events`);
-    evtSource.addEventListener('trace:new', () => mutate());
-    return () => evtSource.close();
+    let evtSource;
+    let reconnectTimeout;
+    const connect = () => {
+      const base = import.meta.env.DEV ? '' : '/ui/..';
+      evtSource = new EventSource(`${base}/api/events`);
+      evtSource.addEventListener('trace:new', () => mutate());
+      evtSource.onerror = () => {
+        evtSource.close();
+        reconnectTimeout = setTimeout(connect, 5000);
+      };
+    };
+    connect();
+    return () => {
+      if (evtSource) evtSource.close();
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+    };
   }, [mutate]);
 
   useEffect(() => {

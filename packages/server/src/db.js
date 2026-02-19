@@ -67,7 +67,7 @@ export function createDb(dbPath = './traces.db') {
       if (status) { where += ' AND status = @status'; params.status = status; }
       if (from) { where += ' AND start_time >= @from'; params.from = new Date(from).getTime(); }
       if (to) { where += ' AND start_time <= @to'; params.to = new Date(to).getTime(); }
-      if (name) { where += ' AND name LIKE @name'; params.name = `%${name}%`; }
+      if (name) { where += " AND name LIKE @name ESCAPE '\\'"; params.name = `%${name.replace(/[%_\\]/g, '\\$&')}%`; }
       params.limit = limit;
       params.offset = offset;
       return sqlite.prepare(
