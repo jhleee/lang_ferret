@@ -1,0 +1,17 @@
+{
+  "name": "local-lang-trace",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "bin": {
+    "local-lang-trace": "./packages/server/src/index.js"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace=packages/server",
+    "dev:ui": "npm run dev --workspace=packages/ui",
+    "build:ui": "npm run build --workspace=packages/ui",
+    "start": "node packages/server/src/index.js",
+    "test": "npm run test --workspace=packages/server"
+  }
+}
