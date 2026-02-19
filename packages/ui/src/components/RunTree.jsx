@@ -1,28 +1,31 @@
 import React, { useState } from 'react';
 import PromptViewer from './PromptViewer.jsx';
 
-export default function RunTree({ runs }) {
+export default function RunTree({ runs, highlightId }) {
   const tree = buildTree(runs);
   return (
     <div className="space-y-1">
       {tree.map((node) => (
-        <RunNode key={node.id} node={node} depth={0} />
+        <RunNode key={node.id} node={node} depth={0} highlightId={highlightId} />
       ))}
     </div>
   );
 }
 
-function RunNode({ node, depth }) {
+function RunNode({ node, depth, highlightId }) {
   const [open, setOpen] = useState(depth < 2);
   const hasChildren = node.children.length > 0;
-  const duration = node.end_time ? `${node.end_time - node.start_time}ms` : '...';
+  const durationMs = node.end_time ? node.end_time - node.start_time : 0;
+  const duration = node.end_time ? (durationMs >= 1000 ? `${(durationMs / 1000).toFixed(1)}s` : `${durationMs}ms`) : '...';
   const isError = node.status === 'error';
+  const isHighlighted = highlightId === node.id;
 
   return (
     <div style={{ paddingLeft: depth * 20 }}>
       <div
         className={`flex items-center gap-2 py-1 px-2 rounded cursor-pointer hover:bg-gray-800/50
-          ${isError ? 'text-red-400' : 'text-gray-200'}`}
+          ${isError ? 'text-red-400' : 'text-gray-200'}
+          ${isHighlighted ? 'ring-1 ring-blue-500 bg-gray-800/60' : ''}`}
         onClick={() => setOpen(!open)}
       >
         <span className="text-gray-600 text-xs w-4">
@@ -43,7 +46,7 @@ function RunNode({ node, depth }) {
       {open && hasChildren && (
         <div>
           {node.children.map((child) => (
-            <RunNode key={child.id} node={child} depth={depth + 1} />
+            <RunNode key={child.id} node={child} depth={depth + 1} highlightId={highlightId} />
           ))}
         </div>
       )}

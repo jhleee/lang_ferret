@@ -6,6 +6,9 @@ export default function ingestRoutes(fastify, { buffer, flusher }) {
       use_multipart_endpoint: false,
       size_limit_bytes: null,
       size_limit: 20,
+      scale_up_nthreads_limit: 16,
+      scale_up_qsize_trigger: 1000,
+      scale_down_nempty_trigger: 4,
     },
   }));
 

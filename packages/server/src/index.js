@@ -42,6 +42,19 @@ const flusher = createFlusher({
 
 const app = Fastify({ logger: false });
 
+// Access log (debug)
+app.addHook('onRequest', (request, reply, done) => {
+  const ts = new Date().toISOString().slice(11, 23);
+  console.log(`[${ts}] --> ${request.method} ${request.url}`);
+  done();
+});
+app.addHook('onResponse', (request, reply, done) => {
+  const ts = new Date().toISOString().slice(11, 23);
+  const ms = reply.elapsedTime?.toFixed(1) ?? '-';
+  console.log(`[${ts}] <-- ${request.method} ${request.url} ${reply.statusCode} ${ms}ms`);
+  done();
+});
+
 await app.register(cors, { origin: true });
 
 ingestRoutes(app, { buffer, flusher });

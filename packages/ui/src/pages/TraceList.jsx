@@ -5,8 +5,21 @@ import { useStore, apiUrl } from '../store.js';
 const fetcher = (url) => fetch(url).then((r) => r.json());
 const PAGE_SIZE = 50;
 
+function toLocalISOString(date) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function defaultTimeRange() {
+  const now = new Date();
+  const from = new Date(now.getTime() - 60 * 60 * 1000);
+  const to = new Date(now.getTime() + 60 * 60 * 1000);
+  return { from: toLocalISOString(from), to: toLocalISOString(to) };
+}
+
 export default function TraceList() {
-  const [filters, setFilters] = useState({ status: '', name: '', from: '', to: '' });
+  const { from: defaultFrom, to: defaultTo } = defaultTimeRange();
+  const [filters, setFilters] = useState({ status: '', name: '', from: defaultFrom, to: defaultTo });
   const [allTraces, setAllTraces] = useState([]);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);

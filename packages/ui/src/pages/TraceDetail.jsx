@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import useSWR from 'swr';
 import { useStore, apiUrl } from '../store.js';
 import RunTree from '../components/RunTree.jsx';
+import WaterfallTimeline from '../components/WaterfallTimeline.jsx';
 
 const fetcher = (url) => fetch(url).then((r) => r.json());
 
 export default function TraceDetail({ traceId }) {
   const setSelectedTraceId = useStore((s) => s.setSelectedTraceId);
+  const [highlightId, setHighlightId] = useState(null);
   const { data, error } = useSWR(
     traceId ? apiUrl(`/api/traces/${traceId}`) : null,
     fetcher
@@ -34,7 +36,8 @@ export default function TraceDetail({ traceId }) {
           Close
         </button>
       </div>
-      <RunTree runs={data.runs} />
+      <WaterfallTimeline runs={data.runs} onSelect={setHighlightId} />
+      <RunTree runs={data.runs} highlightId={highlightId} />
     </div>
   );
 }
