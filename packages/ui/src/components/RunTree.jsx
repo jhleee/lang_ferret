@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PromptViewer from './PromptViewer.jsx';
+import { useStore } from '../store.js';
 
 export default function RunTree({ runs, highlightId }) {
   const tree = buildTree(runs);
@@ -14,19 +14,28 @@ export default function RunTree({ runs, highlightId }) {
 
 function RunNode({ node, depth, highlightId }) {
   const [open, setOpen] = useState(depth < 2);
+  const selectedRunId = useStore((s) => s.selectedRunId);
+  const setSelectedRunId = useStore((s) => s.setSelectedRunId);
   const hasChildren = node.children.length > 0;
   const durationMs = node.end_time ? node.end_time - node.start_time : 0;
   const duration = node.end_time ? (durationMs >= 1000 ? `${(durationMs / 1000).toFixed(1)}s` : `${durationMs}ms`) : '...';
   const isError = node.status === 'error';
   const isHighlighted = highlightId === node.id;
+  const isSelected = selectedRunId === node.id;
+
+  function handleClick() {
+    setSelectedRunId(node.id);
+    if (hasChildren) setOpen(!open);
+  }
 
   return (
     <div style={{ paddingLeft: depth * 20 }}>
       <div
         className={`flex items-center gap-2 py-1 px-2 rounded cursor-pointer hover:bg-gray-800/50
           ${isError ? 'text-red-400' : 'text-gray-200'}
-          ${isHighlighted ? 'ring-1 ring-blue-500 bg-gray-800/60' : ''}`}
-        onClick={() => setOpen(!open)}
+          ${isHighlighted ? 'ring-1 ring-blue-500 bg-gray-800/60' : ''}
+          ${isSelected ? 'bg-gray-700/60' : ''}`}
+        onClick={handleClick}
       >
         <span className="text-gray-600 text-xs w-4">
           {hasChildren ? (open ? '\u25BC' : '\u25B6') : '\u2500'}
@@ -42,7 +51,6 @@ function RunNode({ node, depth, highlightId }) {
             : node.error}
         </div>
       )}
-      {open && <PromptViewer run={node} />}
       {open && hasChildren && (
         <div>
           {node.children.map((child) => (

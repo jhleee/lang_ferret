@@ -1,6 +1,6 @@
 export default function apiRoutes(fastify, { db, buffer, sse, dbPath }) {
   fastify.get('/api/traces', async (request) => {
-    const { limit = 50, offset = 0, status, from, to, name } = request.query;
+    const { limit = 50, offset = 0, status, from, to, name, thread_id } = request.query;
     return db.getTraces({
       limit: Number(limit),
       offset: Number(offset),
@@ -8,6 +8,17 @@ export default function apiRoutes(fastify, { db, buffer, sse, dbPath }) {
       from: from || undefined,
       to: to || undefined,
       name: name || undefined,
+      thread_id: thread_id || undefined,
+    });
+  });
+
+  fastify.get('/api/threads', async (request) => {
+    const { limit = 50, offset = 0, from, to } = request.query;
+    return db.getThreads({
+      limit: Number(limit),
+      offset: Number(offset),
+      from: from || undefined,
+      to: to || undefined,
     });
   });
 

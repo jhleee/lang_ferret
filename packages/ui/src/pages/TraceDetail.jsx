@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import { useStore, apiUrl } from '../store.js';
 import RunTree from '../components/RunTree.jsx';
@@ -8,11 +8,18 @@ const fetcher = (url) => fetch(url).then((r) => r.json());
 
 export default function TraceDetail({ traceId }) {
   const setSelectedTraceId = useStore((s) => s.setSelectedTraceId);
+  const setTraceRuns = useStore((s) => s.setTraceRuns);
   const [highlightId, setHighlightId] = useState(null);
   const { data, error } = useSWR(
     traceId ? apiUrl(`/api/traces/${traceId}`) : null,
     fetcher
   );
+
+  useEffect(() => {
+    if (data?.runs) {
+      setTraceRuns(data.runs);
+    }
+  }, [data, setTraceRuns]);
 
   if (!traceId) return null;
   if (error) return <div className="p-4 text-red-400">Failed to load trace</div>;

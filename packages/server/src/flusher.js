@@ -3,6 +3,30 @@ import fs from 'node:fs';
 export function createFlusher({ db, buffer, flushIntervalMs = 5000, flushBatchSize = 100, ttlDays = 3, maxDbSizeMb = 200, vacuumOnCleanup = false, dbPath = './traces.db', onFlush = null }) {
   let timer = null;
 
+  const MAPPED_KEYS = new Set([
+    'id', 'trace_id', 'parent_run_id', 'parent_id', 'name', 'run_type',
+    'status', 'inputs', 'outputs', 'error', 'start_time', 'end_time',
+    'prompt_tokens', 'tokens_prompt', 'completion_tokens', 'tokens_completion',
+    'extra', '_patch',
+  ]);
+
+  function collectMetadata(run) {
+    const meta = {};
+    for (const key of Object.keys(run)) {
+      if (!MAPPED_KEYS.has(key)) meta[key] = run[key];
+    }
+    return Object.keys(meta).length > 0 ? JSON.stringify(meta) : null;
+  }
+
+  function extractThreadId(run) {
+    const extra = typeof run.extra === 'string' ? tryParseJson(run.extra) : run.extra;
+    return extra?.metadata?.thread_id ?? null;
+  }
+
+  function tryParseJson(str) {
+    try { return JSON.parse(str); } catch { return null; }
+  }
+
   function normalizeRun(run) {
     return {
       id: run.id,
@@ -23,6 +47,8 @@ export function createFlusher({ db, buffer, flushIntervalMs = 5000, flushBatchSi
       tokens_prompt: run.prompt_tokens ?? run.tokens_prompt ?? null,
       tokens_completion: run.completion_tokens ?? run.tokens_completion ?? null,
       extra: run.extra ? (typeof run.extra === 'string' ? run.extra : JSON.stringify(run.extra)) : null,
+      metadata: collectMetadata(run),
+      thread_id: extractThreadId(run),
     };
   }
 
@@ -52,6 +78,7 @@ export function createFlusher({ db, buffer, flushIntervalMs = 5000, flushBatchSi
         tokens_prompt: patch.prompt_tokens ?? patch.tokens_prompt ?? null,
         tokens_completion: patch.completion_tokens ?? patch.tokens_completion ?? null,
         extra: patch.extra ? (typeof patch.extra === 'string' ? patch.extra : JSON.stringify(patch.extra)) : null,
+        metadata: collectMetadata(patch),
       });
     }
 

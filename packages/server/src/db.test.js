@@ -34,6 +34,8 @@ describe('Database', () => {
       tokens_prompt: 10,
       tokens_completion: 5,
       extra: null,
+      metadata: null,
+      thread_id: null,
     }]);
     const rows = db.getTraces({ limit: 10, offset: 0 });
     assert.equal(rows.length, 1);
@@ -72,6 +74,8 @@ describe('Database', () => {
       tokens_prompt: 0,
       tokens_completion: 0,
       extra: null,
+      metadata: null,
+      thread_id: null,
     }]);
     const deleted = db.deleteOlderThan(Date.now() - 86400000);
     assert.ok(deleted >= 1);

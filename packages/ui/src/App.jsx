@@ -1,11 +1,71 @@
-import React from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useStore } from './store.js';
 import TraceList from './pages/TraceList.jsx';
 import TraceDetail from './pages/TraceDetail.jsx';
+import RunDetail from './components/RunDetail.jsx';
 import StatsPanel from './components/StatsPanel.jsx';
+
+const MIN_LEFT = 288;   // min-w-72
+const MIN_RIGHT = 384;  // min-w-96
+const INIT_LEFT = 288;
+const INIT_RIGHT = 384;
+
+function useDragResize(initial, minSize, direction) {
+  const [size, setSize] = useState(initial);
+  const dragging = useRef(false);
+  const startX = useRef(0);
+  const startSize = useRef(0);
+
+  const onPointerDown = useCallback((e) => {
+    e.preventDefault();
+    dragging.current = true;
+    startX.current = e.clientX;
+    startSize.current = size;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [size]);
+
+  useEffect(() => {
+    const onPointerMove = (e) => {
+      if (!dragging.current) return;
+      const delta = e.clientX - startX.current;
+      const next = direction === 'left'
+        ? startSize.current + delta
+        : startSize.current - delta;
+      setSize(Math.max(minSize, next));
+    };
+    const onPointerUp = () => {
+      if (!dragging.current) return;
+      dragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+  }, [minSize, direction]);
+
+  return { size, onPointerDown };
+}
+
+function DragHandle({ onPointerDown }) {
+  return (
+    <div
+      className="w-1 shrink-0 cursor-col-resize hover:bg-blue-500/40 active:bg-blue-500/60 transition-colors bg-gray-800"
+      onPointerDown={onPointerDown}
+    />
+  );
+}
 
 export default function App() {
   const selectedTraceId = useStore((s) => s.selectedTraceId);
+  const traceRuns = useStore((s) => s.traceRuns);
+
+  const left = useDragResize(INIT_LEFT, MIN_LEFT, 'left');
+  const right = useDragResize(INIT_RIGHT, MIN_RIGHT, 'right');
 
   return (
     <div className="flex flex-col h-screen">
@@ -17,24 +77,43 @@ export default function App() {
             Live
           </span>
         </div>
+        <HeaderStats />
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-56 border-r border-gray-800 p-4 overflow-y-auto bg-gray-900/50">
-          <StatsPanel />
-        </aside>
+        {/* Column 1: Trace List */}
+        <div className="shrink-0 overflow-y-auto" style={{ width: left.size }}>
+          <TraceList />
+        </div>
 
-        <main className="flex-1 flex overflow-hidden">
-          <div className={`${selectedTraceId ? 'w-1/2' : 'w-full'} overflow-y-auto`}>
-            <TraceList />
-          </div>
-          {selectedTraceId && (
-            <div className="w-1/2 border-l border-gray-800 overflow-y-auto">
-              <TraceDetail traceId={selectedTraceId} />
+        <DragHandle onPointerDown={left.onPointerDown} />
+
+        {/* Column 2: Trace Detail (Waterfall + RunTree) */}
+        <div className="flex-1 min-w-0 overflow-y-auto">
+          {selectedTraceId ? (
+            <TraceDetail traceId={selectedTraceId} />
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+              Select a trace to view details
             </div>
           )}
-        </main>
+        </div>
+
+        <DragHandle onPointerDown={right.onPointerDown} />
+
+        {/* Column 3: Run Detail */}
+        <div className="shrink-0 overflow-y-auto" style={{ width: right.size }}>
+          <RunDetail runs={traceRuns} />
+        </div>
       </div>
+    </div>
+  );
+}
+
+function HeaderStats() {
+  return (
+    <div className="hidden md:block">
+      <StatsPanel />
     </div>
   );
 }
