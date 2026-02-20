@@ -222,9 +222,7 @@ const ThreadGroup = React.forwardRef(function ThreadGroup({ thread, filters }, r
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-gray-600 text-xs w-4">{open ? '\u25BC' : '\u25B6'}</span>
           <span className="font-mono text-xs truncate text-gray-300" title={thread.thread_id}>
-            {thread.thread_id.length > 20
-              ? `...${thread.thread_id.slice(-16)}`
-              : thread.thread_id}
+            {thread.thread_id}
           </span>
         </div>
         <div className="flex items-center gap-2 text-[10px] text-gray-500 shrink-0">

@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { useStore } from '../store.js';
 
+const TYPE_COLORS = {
+  chain: 'bg-blue-500',
+  llm: 'bg-amber-500',
+  tool: 'bg-emerald-500',
+  retriever: 'bg-purple-500',
+};
+
 export default function RunTree({ runs, highlightId }) {
   const tree = buildTree(runs);
   return (
@@ -40,6 +47,7 @@ function RunNode({ node, depth, highlightId }) {
         <span className="text-gray-600 text-xs w-4">
           {hasChildren ? (open ? '\u25BC' : '\u25B6') : '\u2500'}
         </span>
+        <span className={`w-2 h-2 rounded-full shrink-0 ${isError ? 'bg-red-500' : (TYPE_COLORS[node.run_type] || 'bg-gray-500')}`} />
         <span className="font-mono text-sm">{node.name || node.id.slice(0, 8)}</span>
         <span className="text-xs text-gray-500">({node.run_type})</span>
         <span className="ml-auto text-xs text-gray-400">{duration}</span>
